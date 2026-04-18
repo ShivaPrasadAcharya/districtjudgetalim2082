@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📁 DJ Talim File Browser · Interactive Table</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      font-family: system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    }
+    body {
+      background: #f4f7fc;
+      padding: 24px 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .app-container {
+      max-width: 1400px;
+      width: 100%;
+      background: white;
+      border-radius: 28px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+      padding: 24px 28px 32px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+    h1 {
+      font-weight: 600;
+      font-size: 2rem;
+      letter-spacing: -0.02em;
+      color: #1a2b3e;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      background: #e6edf5;
+      padding: 4px 14px;
+      border-radius: 40px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #1e4660;
+      margin-left: 10px;
+    }
+    .search-section {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+      background: #f9fbfd;
+      padding: 16px 20px;
+      border-radius: 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .search-wrapper {
+      flex: 2;
+      min-width: 260px;
+      display: flex;
+      align-items: center;
+      background: white;
+      border: 1px solid #d9e2ec;
+      border-radius: 48px;
+      padding: 4px 6px 4px 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      transition: 0.2s;
+    }
+    .search-wrapper:focus-within {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+    .search-wrapper input {
+      width: 100%;
+      border: none;
+      padding: 12px 8px 12px 0;
+      font-size: 1rem;
+      background: transparent;
+      outline: none;
+    }
+    .search-icon {
+      margin-right: 10px;
+      color: #5e7180;
+      font-size: 1.2rem;
+    }
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .filter-select {
+      background: white;
+      border: 1px solid #d9e2ec;
+      border-radius: 40px;
+      padding: 10px 20px;
+      font-size: 0.95rem;
+      color: #1e3a5f;
+      font-weight: 500;
+      cursor: pointer;
+      outline: none;
+      transition: 0.15s;
+    }
+    .filter-select:hover {
+      border-color: #3b82f6;
+    }
+    .clear-btn {
+      background: white;
+      border: 1px solid #d0dde9;
+      border-radius: 40px;
+      padding: 10px 20px;
+      font-weight: 500;
+      color: #2c4b6b;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .clear-btn:hover {
+      background: #eef3f9;
+      border-color: #a0bbd0;
+    }
+    .stats {
+      margin-left: auto;
+      font-size: 0.95rem;
+      color: #3a5b7c;
+      background: #e9f0f6;
+      padding: 6px 18px;
+      border-radius: 30px;
+      font-weight: 500;
+    }
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 18px;
+      border: 1px solid #e2eaf2;
+      background: white;
+      margin-top: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 700px;
+      font-size: 0.95rem;
+      table-layout: auto;
+    }
+    th {
+      text-align: left;
+      padding: 18px 16px;
+      background: #f2f6fa;
+      color: #1e405e;
+      font-weight: 600;
+      border-bottom: 2px solid #cddae6;
+      white-space: nowrap;
+    }
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #e6edf4;
+      vertical-align: middle;
+    }
+    tr:hover td {
+      background-color: #fbfdff;
+    }
+    .shorturl-cell {
+      position: relative;
+    }
+    .shorturl-cell a {
+      font-weight: 600;
+      color: #1d4ed8;
+      text-decoration: none;
+      display: inline-block;
+      padding: 4px 6px 4px 0;
+      transition: 0.1s;
+      border-bottom: 1px dotted transparent;
+    }
+    .shorturl-cell a:hover {
+      color: #0b2d8e;
+      border-bottom: 1px dotted #1d4ed8;
+    }
+    .preview {
+      display: none;
+      position: absolute;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      z-index: 1000;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      max-width: 400px;
+      word-wrap: break-word;
+    }
+    .shorturl-cell:hover .preview {
+      display: block;
+    }
+    .thumb-container img {
+      width: 100px;
+      height: 100px;
+      margin: 2px;
+      border: 1px solid #ccc;
+    }
+    mark {
+      background-color: yellow;
+      color: black;
+    }
+    mark.mark-current {
+      background-color: orange;
+      color: black;
+    }
+    .longurl-cell a {
+      color: #2c5f7c;
+      text-decoration: none;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.9rem;
+      display: block;
+      max-width: 220px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      direction: ltr;
+    }
+    .longurl-cell a:hover {
+      color: #0f3b5e;
+      text-decoration: underline;
+    }
+    .file-icon {
+      margin-right: 8px;
+      font-size: 1.2rem;
+      vertical-align: middle;
+    }
+    .type-badge {
+      background: #e1e9f1;
+      padding: 4px 10px;
+      border-radius: 30px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #1e4c6b;
+    }
+    .empty-row td {
+      padding: 36px;
+      text-align: center;
+      color: #6b8a9e;
+      font-style: italic;
+    }
+    .footer-note {
+      margin-top: 20px;
+      color: #54738f;
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .link-sim {
+      background: #ecf3fa;
+      border-radius: 12px;
+      padding: 2px 10px;
+    }
+    /* highlight row if rowColors apply (from metadata) */
+    tr[data-highlight="true"] td {
+      background-color: #fff3bf !important;
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <header>
+    <h1>
+      <span>📂 DJ Talim Files</span>
+      <span class="badge">📊 Training Materials</span>
+    </h1>
+  </header>
+
+  <!-- Search & filter bar -->
+  <div class="search-section">
+    <div class="search-wrapper">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search by shorturl, longurl, or file name..." autocomplete="off">
+    </div>
+    <div class="filter-group">
+      <select id="typeFilter" class="filter-select">
+        <option value="all">📄 All types</option>
+        <!-- dynamically populated -->
+      </select>
+      <button id="clearFiltersBtn" class="clear-btn" title="Clear search & filter">✖ Clear</button>
+      <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem;">
+        <input type="checkbox" id="normalizeNepali" checked> Normalize Nepali
+      </label>
+      <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem;">
+        <input type="checkbox" id="filterRows" checked> Filter rows
+      </label>
+    </div>
+    <div class="stats" id="rowCountDisplay">0 items</div>
+    <div id="matchNav" style="display: none; margin-left: 10px;">
+      <button id="prevMatch" style="margin-right: 5px;">⬆ Prev</button>
+      <span id="matchCount">0 of 0</span>
+      <button id="nextMatch" style="margin-left: 5px;">⬇ Next</button>
+    </div>
+  </div>
+
+  <!-- Table display -->
+  <div class="table-wrapper">
+    <table id="fileTable">
+      <thead>
+        <tr>
+          <th>📁 Type</th>
+          <th>🔖 shorturl</th>
+          <th>🌐 longurl / filename</th>
+          <th>📏 Size (bytes)</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <!-- JS will render rows -->
+      </tbody>
+    </table>
+  </div>
+  <div class="footer-note">
+    <span>⭐ Click <strong>shorturl</strong> or <strong>longurl</strong> → opens in new tab. Truncated long URLs show full on hover.</span>
+    <span class="link-sim">📎 Local files use relative paths</span>
+  </div>
+</div>
+
+<!-- Back to Top Button -->
+<button id="backToTop" style="position: fixed; bottom: 20px; right: 20px; display: none; background: #3b82f6; color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 20px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 1000;">↑</button>
+
+<script>
+  (function() {
+    "use strict";
+
+    // ---------- METADATA (same spirit as data5UrlInfo) ----------
+    window.data5UrlInfo = {
+      name: "DJ Talim Files",
+      description: "Display files from DJ_Talim folder. shorturl = filename without extension, longurl = relative path.",
+      emoji: "📁📊",
+      columns: 4,
+      primaryKey: "shorturl",
+      rowColors: {
+      }
+    };
+
+    // ---------- NEPALI NORMALIZER ----------
+    const NepaliNormalizer = {
+      vowelMap:    { 'ी': 'ि', 'ू': 'ु' },
+      sibilantMap: { 'श': 'स', 'ष': 'स' },
+      nasalMap:    { 'ङ': 'न', 'ण': 'न', 'ञ': 'न', 'ं': 'न्' },
+      vaBaMap:     { 'व': 'ब' },
+      numberMap:   { '०':'0', '१':'1', '२':'2', '३':'3', '४':'4', '५':'5', '६':'6', '७':'7', '८':'8', '९':'9' },
+      normalize(text) {
+        if (!text) return '';
+        let n = text.normalize('NFC').replace(/\u200D/g,'').replace(/\u200C/g,'');
+        for (const [f,t] of Object.entries(this.vowelMap))    n = n.split(f).join(t);
+        for (const [f,t] of Object.entries(this.sibilantMap)) n = n.split(f).join(t);
+        for (const [f,t] of Object.entries(this.nasalMap))    n = n.split(f).join(t);
+        for (const [f,t] of Object.entries(this.vaBaMap))     n = n.split(f).join(t);
+        for (const [f,t] of Object.entries(this.numberMap))   n = n.split(f).join(t);
+        return n;
+      },
+      isDevanagari(text) { return /[\u0900-\u097F]/.test(text); },
+      mapToOriginal(normPos, original, normalized) {
+        if (normPos <= 0) return 0;
+        if (normPos >= normalized.length) return original.length;
+        let origIdx=0, normIdx=0;
+        while (normIdx < normPos && origIdx < original.length) {
+          if (original[origIdx]==='\u200D'||original[origIdx]==='\u200C'){ origIdx++; continue; }
+          origIdx++; normIdx++;
+        }
+        while (origIdx < original.length && (original[origIdx]==='\u200D'||original[origIdx]==='\u200C')) origIdx++;
+        return origIdx;
+      }
+    };
+
+    // ---------- GLOBAL STATE ----------
+    let allRows = [];              // { shorturl, longurl, type, size, ext, isHttp }
+    let filteredRows = [];
+    let typeFilterValue = 'all';
+    let searchTerm = '';
+    let currentMatchIndex = 0;
+
+    // DOM elements
+    const tbody = document.getElementById('tableBody');
+    const searchInput = document.getElementById('searchInput');
+    const typeFilter = document.getElementById('typeFilter');
+    const clearBtn = document.getElementById('clearFiltersBtn');
+    const rowCountDisplay = document.getElementById('rowCountDisplay');
+    const normalizeNepali = document.getElementById('normalizeNepali');
+    const filterRows = document.getElementById('filterRows');
+    const matchNav = document.getElementById('matchNav');
+    const matchCount = document.getElementById('matchCount');
+    const prevMatch = document.getElementById('prevMatch');
+    const nextMatch = document.getElementById('nextMatch');
+
+    // ---------- HELPER: get file icon / category from extension ----------
+    function getFileCategory(filename) {
+      const ext = filename.split('.').pop().toLowerCase();
+      const extensionMap = {
+        // documents
+        'doc':'📄 DOC', 'docx':'📄 DOCX', 'txt':'📃 TXT', 'pdf':'📕 PDF', 
+        'ppt':'📊 PPT', 'pptx':'📊 PPTX', 'xls':'📈 XLS', 'xlsx':'📈 XLSX',
+        'html':'🌐 HTML', 'htm':'🌐 HTM',
+        // images
+        'jpg':'🖼️ JPG', 'jpeg':'🖼️ JPEG', 'png':'🖼️ PNG', 'gif':'🖼️ GIF', 'svg':'🎨 SVG',
+        // videos
+        'mp4':'🎥 MP4',
+        // archives / others
+        'zip':'🗜️ ZIP', 'rar':'🗜️ RAR', '7z':'🗜️ 7Z',
+      };
+      if (extensionMap[ext]) return extensionMap[ext];
+      // web URLs with no extension
+      if (/^https?:\/\//i.test(filename)) return '🔗 WEB';
+      return '📁 FILE';
+    }
+
+    function getSimpleType(ext) {
+      if (!ext) return 'other';
+      const docLike = ['doc','docx','txt','pdf','ppt','pptx','xls','xlsx','html','htm'];
+      const imgLike = ['jpg','jpeg','png','gif','svg','bmp','webp'];
+      if (docLike.includes(ext)) return 'document';
+      if (imgLike.includes(ext)) return 'image';
+      return 'other';
+    }
+
+    // Format size
+    function formatSize(bytes) {
+      if (bytes === undefined || bytes === null || isNaN(bytes)) return '—';
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    // Highlight text
+    function highlightText(text, term, useNormalize, isCurrent = false) {
+      if (!term || !text) return text;
+      const normalizedTerm = useNormalize ? NepaliNormalizer.normalize(term.toLowerCase()) : term.toLowerCase();
+      const normalizedText = useNormalize ? NepaliNormalizer.normalize(text.toLowerCase()) : text.toLowerCase();
+      const index = normalizedText.indexOf(normalizedTerm);
+      if (index === -1) return text;
+      const start = useNormalize ? NepaliNormalizer.mapToOriginal(index, text, normalizedText) : index;
+      const end = useNormalize ? NepaliNormalizer.mapToOriginal(index + normalizedTerm.length, text, normalizedText) : index + term.length;
+      const markClass = isCurrent ? 'mark-current' : '';
+      return text.slice(0, start) + '<mark class="' + markClass + '">' + text.slice(start, end) + '</mark>' + text.slice(end);
+    }
+
+    // ---------- SIMULATE FILES IN THE SAME FOLDER (local file detection impossible from static HTML) 
+    // We generate a realistic list: including the given data5Url + extra local files.
+    // The user expects "files included in the same folder as index.html will be displayed".
+    // Since we can't scan actual directory, we build a plausible set that represents many file types.
+    // In a real server environment, you'd use a backend or directory listing.
+    // But we inject a rich set so UI demonstrates the functionality.
+    function buildFileList() {
+      // Files from DJ_Talim folder
+      const djTalimFiles = [
+        { shorturl: '22071352423-Final A Study on Cyber Crime Cases in Nepal, 2022-10_u52gj23', longurl: 'DJ_Talim/22071352423-Final A Study on Cyber Crime Cases in Nepal, 2022-10_u52gj23.pdf', size: 8749280 },
+        { shorturl: 'Details', longurl: 'DJ_Talim/Details.docx', size: 37034 },
+        { shorturl: 'Faisal lekhan for training', longurl: 'DJ_Talim/Faisal lekhan for training.docx', size: 48377 },
+        { shorturl: 'Image 2026-02-02 at 3.18.51 PM', longurl: 'DJ_Talim/Image 2026-02-02 at 3.18.51 PM.jpeg', size: 341006 },
+        { shorturl: 'कमन ल को उदम स्थल नियालदा', longurl: 'DJ_Talim/कमन ल को उदम स्थल नियालदा.docx', size: 4096 },
+        { shorturl: 'करार तथा दुष्कृति कानूनसम्बन्धी विशेषाङ्क_cqn1y6y', longurl: 'DJ_Talim/करार तथा दुष्कृति कानूनसम्बन्धी विशेषाङ्क_cqn1y6y.pdf', size: 19273110 },
+        { shorturl: 'जिल्ला अदालतबाट आत्महत्या_9xaov4a', longurl: 'DJ_Talim/जिल्ला अदालतबाट आत्महत्या_9xaov4a.pdf', size: 25208742 },
+        { shorturl: 'तपसिल खण्ड लेखनसम्बन्धी स्रोत सामाग्री २०७८_ilgjtrm', longurl: 'DJ_Talim/तपसिल खण्ड लेखनसम्बन्धी स्रोत सामाग्री २०७८_ilgjtrm.pdf', size: 35515246 },
+        { shorturl: 'सर्वोच्च अदालत_vuffutx', longurl: 'DJ_Talim/सर्वोच्च अदालत_vuffutx.pdf', size: 4515936 },
+        { shorturl: 'स्वच्छ सुनुवाइ सम्बन्धी पाठ्य सामाग्रि, २०८०_n49yxlp', longurl: 'DJ_Talim/स्वच्छ सुनुवाइ सम्बन्धी पाठ्य सामाग्रि, २०८०_n49yxlp.pdf', size: 29745465 },
+        { shorturl: 'न्यायमा पहुँच र न्यायाधीशको भूमिका', longurl: 'DJ_Talim/Day 1/न्यायमा पहुँच र न्यायाधीशको भूमिका .pptx', size: 635264 },
+        { shorturl: 'अर्ध न्यायिक निकायको अनुगमन निरिक्षण तथा जिल्ला अदालतको पूनरावेदकीय क्षेत्राधिकार सम्बन्धी व्यवस्था मा श्री अवनी मैनाली भट्टराई', longurl: 'DJ_Talim/Day 10/अर्ध न्यायिक निकायको अनुगमन निरिक्षण तथा जिल्ला अदालतको पूनरावेदकीय क्षेत्राधिकार सम्बन्धी व्यवस्था मा श्री अवनी मैनाली भट्टराई.pptx', size: 94480 },
+        { shorturl: 'गोपनीयता र लगातार सुनुवाई, मा.श्री केशव प्र वास्तोला', longurl: 'DJ_Talim/Day 10/गोपनीयता र लगातार सुनुवाई, मा.श्री केशव प्र वास्तोला.pptx', size: 3561160 },
+        { shorturl: 'सजायको उद्देश्य तथा निर्धारणका आधारहरु मा श्री महेश शर्मा पौडल', longurl: 'DJ_Talim/Day 10/सजायको उद्देश्य तथा निर्धारणका आधारहरु मा श्री महेश शर्मा पौडल.pptx', size: 238275 },
+        { shorturl: 'फैसला लेखनका आधारभूत पक्षहरू  मा श्री सू्यप्रसाद पराजुली', longurl: 'DJ_Talim/Day 11/फैसला लेखनका आधारभूत पक्षहरू  मा श्री सू्यप्रसाद पराजुली.pptx', size: 109517 },
+        { shorturl: 'फौजदारी मुद्दाको फैसला लेखन अभ्यास मा श्री ईश्‍वर पराजुली', longurl: 'DJ_Talim/Day 11/फौजदारी मुद्दाको फैसला लेखन अभ्यास मा श्री ईश्‍वर पराजुली.pptx', size: 202899 },
+        { shorturl: 'वैज्ञानिक प्रमाण तथा शव परिक्षण प्रतिवेदन गोपाल कुमार चौधरी', longurl: 'DJ_Talim/Day 11/वैज्ञानिक प्रमाण तथा शव परिक्षण प्रतिवेदन गोपाल कुमार चौधरी.pptx', size: 10157424 },
+        { shorturl: 'आदेश लेखनको आधारभूत पक्ष तथा  अभ्यास मा श्री आत्मदेव जोशी', longurl: 'DJ_Talim/Day 12/आदेश लेखनको आधारभूत पक्ष तथा  अभ्यास मा श्री आत्मदेव जोशी.pptx', size: 64867 },
+        { shorturl: 'बाल न्याय सम्बन्धी कानूनी व्यवस्था तथा प्रयोग मा श्री राजेन्द्र खरेल', longurl: 'DJ_Talim/Day 12/बाल न्याय सम्बन्धी कानूनी व्यवस्था तथा प्रयोग मा श्री राजेन्द्र खरेल.pptx', size: 41561 },
+        { shorturl: 'साईवर अपराध कानून र अदालतमा प्रयोग श्री केदार घिमिरे', longurl: 'DJ_Talim/Day 12/साईवर अपराध कानून र अदालतमा प्रयोग श्री केदार घिमिरे.pptx', size: 3761359 },
+        { shorturl: 'DNA Typing and DNA Result Interpretation डा. श्री दिनेश कुमार झा', longurl: 'DJ_Talim/Day 13/DNA Typing and DNA Result Interpretation डा. श्री दिनेश कुमार झा.pdf', size: 913563 },
+        { shorturl: '078- CP-2909 सम्बन्ध विच्छेद दावी पुग्ने', longurl: 'DJ_Talim/Day 13/देवानी मुद्दाको फैसला लेखन/078- CP-2909 सम्बन्ध विच्छेद दावी पुग्ने.doc', size: 121856 },
+        { shorturl: '078-CP-3285 अंशदर्ता प्रतिउत्तर परेको दावी पुग्ने', longurl: 'DJ_Talim/Day 13/देवानी मुद्दाको फैसला लेखन/078-CP-3285 अंशदर्ता प्रतिउत्तर परेको दावी पुग्ने.doc', size: 116224 },
+        { shorturl: 'देवानी मुद्दाको फैसला लेखन  मा श्री नारायणप्रसाद सुवेदी', longurl: 'DJ_Talim/Day 13/देवानी मुद्दाको फैसला लेखन/देवानी मुद्दाको फैसला लेखन  मा श्री नारायणप्रसाद सुवेदी.pptx', size: 396734 },
+        { shorturl: 'नि.नं. 292 लेनदेन', longurl: 'DJ_Talim/Day 13/देवानी मुद्दाको फैसला लेखन/नि.नं. 292 लेनदेन.docx', size: 35381 },
+        { shorturl: 'न्यायाधीशको व्यवहार, जनआस्था र संचारकर्मीसंगको सम्बन्ध।मा श्री दामोदर खड्का', longurl: 'DJ_Talim/Day 14/न्यायाधीशको व्यवहार, जनआस्था र संचारकर्मीसंगको सम्बन्ध।मा श्री दामोदर खड्का.pptx', size: 2335870 },
+        { shorturl: 'दावीको सौदावाजी (plea Bargaining) सम्बन्धी कानूनी व्यवस्था र प्रयोग मा श्री नृपध्वज निरौला', longurl: 'DJ_Talim/Day 15/दावीको सौदावाजी (plea Bargaining) सम्बन्धी कानूनी व्यवस्था र प्रयोग मा श्री नृपध्वज निरौला.pptx', size: 590039 },
+        { shorturl: 'आदेश लेखन २०८२ माघ १५ गते', longurl: 'DJ_Talim/Day 15/बन्दीप्रत्यक्षीकरण तथा निषेधाज्ञाको अन्तिम आदेश लेखन अभ्यास मा श्री श्यामकुमार भट्टराई/आदेश लेखन २०८२ माघ १५ गते.pptx', size: 77130 },
+        { shorturl: 'नि.नं. 731-080-WO-0637 निषेधाज्ञा', longurl: 'DJ_Talim/Day 15/बन्दीप्रत्यक्षीकरण तथा निषेधाज्ञाको अन्तिम आदेश लेखन अभ्यास मा श्री श्यामकुमार भट्टराई/नि.नं. 731-080-WO-0637 निषेधाज्ञा.doc', size: 180736 },
+        { shorturl: '८ निषेधाज्ञा', longurl: 'DJ_Talim/Day 15/बन्दीप्रत्यक्षीकरण तथा निषेधाज्ञाको अन्तिम आदेश लेखन अभ्यास मा श्री श्यामकुमार भट्टराई/८ निषेधाज्ञा.docx', size: 81448 },
+        { shorturl: 'जिल्ला न्यायाधीशको भूमिका  र जिम्मेवारी मा श्री हरिप्रसाद फुयाल', longurl: 'DJ_Talim/Day 2/जिल्ला न्यायाधीशको भूमिका  र जिम्मेवारी मा श्री हरिप्रसाद फुयाल.pptx', size: 231955 },
+        { shorturl: 'न्यायिक कार्यबाहेक जिल्ला न्यायाधीशको भूमिका र जिम्मेबारी मा श्री हरिकुमार पोखरेल', longurl: 'DJ_Talim/Day 2/न्यायिक कार्यबाहेक जिल्ला न्यायाधीशको भूमिका र जिम्मेबारी मा श्री हरिकुमार पोखरेल.pptx', size: 129587 },
+        { shorturl: 'प्रोटोकल र शिष्टाचार माननीय श्री केदार पौडेल Dining Etiquette For Beginners', longurl: 'DJ_Talim/Day 2/प्रोटोकल र शिष्टाचार माननीय श्री केदार पौडेल/प्रोटोकल र शिष्टाचार माननीय श्री केदार पौडेल Dining Etiquette For Beginners.mp4', size: 15017865 },
+        { shorturl: 'प्रोटोकल र शिष्टाचार माननीय श्री केदार पौडेल Protocal and Etiquette', longurl: 'DJ_Talim/Day 2/प्रोटोकल र शिष्टाचार माननीय श्री केदार पौडेल/प्रोटोकल र शिष्टाचार माननीय श्री केदार पौडेल Protocal and Etiquette,.pptx', size: 1518478 },
+        { shorturl: 'न्यायाधीशले मुद्दा हेर्न नहुने अवस्था मा श्री आन्‍नदमोहन भट्टराई', longurl: 'DJ_Talim/Day 3/न्यायाधीशले मुद्दा हेर्न नहुने अवस्था मा श्री आन्‍नदमोहन भट्टराई.pptx', size: 69389 },
+        { shorturl: 'प्रारम्भिक सुनुवाई र वादी प्रतिवादी छलफल मा श्री डिल्लीरत्न श्रेष्ठ', longurl: 'DJ_Talim/Day 3/प्रारम्भिक सुनुवाई र वादी प्रतिवादी छलफल मा श्री डिल्लीरत्न श्रेष्ठ.pptx', size: 1708692 },
+        { shorturl: 'जिल्ला अदालतको कार्य संपादन मापदण्ड र सूचक माननीय श्री चुरामन खड्का', longurl: 'DJ_Talim/Day 4/जिल्ला अदालतको कार्य संपादन मापदण्ड र सूचक माननीय श्री चुरामन खड्का.pptx', size: 1379652 },
+        { shorturl: 'न्यायाधीश विरुद्वका उजुरी र कारबाही माननीय श्री महेश कुमार नेपाल', longurl: 'DJ_Talim/Day 4/न्यायाधीश विरुद्वका उजुरी र कारबाही माननीय श्री महेश कुमार नेपाल.pptx', size: 1186778 },
+        { shorturl: 'न्यायाधीशमा हुनुपर्ने आदर्श गुणहरु  मा श्री तिलप्रसाद श्रेष्ठ', longurl: 'DJ_Talim/Day 4/न्यायाधीशमा हुनुपर्ने आदर्श गुणहरु  मा श्री तिलप्रसाद श्रेष्ठ.pptx', size: 116432 },
+        { shorturl: 'थुनछेक माननीय डा. श्री दिवाकर भट्ट', longurl: 'DJ_Talim/Day 5/थुनछेक माननीय डा. श्री दिवाकर भट्ट.pptx', size: 122070 },
+        { shorturl: 'पक्राउ पुर्जी म्याद थप र बयान माननीय श्री ध्रुवराज त्रिपाठी', longurl: 'DJ_Talim/Day 5/पक्राउ पुर्जी म्याद थप र बयान माननीय श्री ध्रुवराज त्रिपाठी.pptx', size: 101507 },
+        { shorturl: 'स्वच्छ सुनुवाई र जिल्ला न्यायाधीशको भूमिका माननीय  डा. श्री नहकुल सुवेदी', longurl: 'DJ_Talim/Day 5/स्वच्छ सुनुवाई र जिल्ला न्यायाधीशको भूमिका माननीय  डा. श्री नहकुल सुवेदी.pptx', size: 59346 },
+        { shorturl: 'WhatsApp Image 2026-01-21 at 10.40.16 AM', longurl: 'DJ_Talim/Day 6/WhatsApp Image 2026-01-21 at 10.40.16 AM.jpeg', size: 203148 },
+        { shorturl: 'WhatsApp Image 2026-01-21 at 10.40.17 AM', longurl: 'DJ_Talim/Day 6/WhatsApp Image 2026-01-21 at 10.40.17 AM.jpeg', size: 215324 },
+        { shorturl: 'गुठी सम्बन्धी कानूनी व्यवस्था र अभ्यास मा श्री राजुकुमार खतिवडा', longurl: 'DJ_Talim/Day 6/गुठी सम्बन्धी कानूनी व्यवस्था र अभ्यास मा श्री राजुकुमार खतिवडा.pptx', size: 368111 },
+        { shorturl: 'नेपालमा जग्गा प्रशासन तथा नापनक्सा सम्बन्धी आधारभूत पक्ष श्री जनकराज जोशी', longurl: 'DJ_Talim/Day 6/नेपालमा जग्गा प्रशासन तथा नापनक्सा सम्बन्धी आधारभूत पक्ष श्री जनकराज जोशी.pptx', size: 4279495 },
+        { shorturl: 'जग्गा सम्बन्धी विवाद -१ (अंशवण्डा, साँध, सिमाना, मोही र जग्गाधनी) माननीय श्री द्वारिकामान जोशी', longurl: 'DJ_Talim/Day 7/जग्गा सम्बन्धी विवाद -१ (अंशवण्डा, साँध, सिमाना, मोही र जग्गाधनी) माननीय श्री द्वारिकामान जोशी.pptx', size: 77322 },
+        { shorturl: 'जग्गा सम्बन्धी विवाद -२ (सार्वजनिक - सरकारी, किर्ते जालसाजी, लिखतवदर र जग्गा प्राप्ति तथा मुआव्जा) माननीय श्री द्वारिकामान जोशी', longurl: 'DJ_Talim/Day 7/जग्गा सम्बन्धी विवाद -२ (सार्वजनिक - सरकारी, किर्ते जालसाजी, लिखतवदर र जग्गा प्राप्ति तथा मुआव्जा) माननीय श्री द्वारिकामान जोशी.pptx', size: 74762 },
+        { shorturl: 'न्यायपालिकाको रणनीतिक योजना, लक्ष्य र रणनीतिहरु माननीय श्री लालबहादुर कुँवर', longurl: 'DJ_Talim/Day 7/न्यायपालिकाको रणनीतिक योजना, लक्ष्य र रणनीतिहरु माननीय श्री लालबहादुर कुँवर.pptx', size: 139895 },
+        { shorturl: 'जग्गा विवादमा नाप नक्सा अध्ययन तथा नक्साको विवेचना मा श्री हरिकुमार पोखरेल', longurl: 'DJ_Talim/Day 8/जग्गा विवादमा नाप नक्सा अध्ययन तथा नक्साको विवेचना मा श्री हरिकुमार पोखरेल.pptx', size: 924848 },
+        { shorturl: 'फरक मुद्दा व्यवस्थापन मा श्री  टेकप्रसाद ढुङ्गाना', longurl: 'DJ_Talim/Day 8/फरक मुद्दा व्यवस्थापन मा श्री  टेकप्रसाद ढुङ्गाना.pptx', size: 83319 },
+        { shorturl: 'देवानी संहितामा निजी अन्तराष्ट्रिय कानून सम्बन्धी व्यवस्था तथा अभ्यास श्री भद्रकाली पोखरेल', longurl: 'DJ_Talim/Day 9/देवानी संहितामा निजी अन्तराष्ट्रिय कानून सम्बन्धी व्यवस्था तथा अभ्यास श्री भद्रकाली पोखरेल.pptx', size: 782848 },
+        { shorturl: 'निजी अन्तराष्ट्रिय कानूनको प्रयोग श्री प्रेम चन्द्र राई', longurl: 'DJ_Talim/Day 9/निजी अन्तराष्ट्रिय कानूनको प्रयोग श्री प्रेम चन्द्र राई.pptx', size: 53849 },
+        { shorturl: 'Diversion', longurl: 'DJ_Talim/बाल न्याय PPT/Diversion .pptx', size: 70728 },
+        { shorturl: 'R J D', longurl: 'DJ_Talim/बाल न्याय PPT/R J D .ppt', size: 185344 },
+        { shorturl: 'Restorative Justice', longurl: 'DJ_Talim/बाल न्याय PPT/Restorative Justice.ppt', size: 1013248 },
+        { shorturl: 'बालन्याय D', longurl: 'DJ_Talim/बाल न्याय PPT/बालन्याय D.ppt', size: 199680 },
+        { shorturl: 'बालन्यायको अवधारणा', longurl: 'DJ_Talim/बाल न्याय PPT/बालन्यायको अवधारणा.ppt', size: 35434496 },
+        { shorturl: 'बालबालिकाको-दिशान्तर-कार्यविधि-सम्बन्धी-निर्देशिका-२०८०', longurl: 'DJ_Talim/बाल न्याय PPT/बालबालिकाको-दिशान्तर-कार्यविधि-सम्बन्धी-निर्देशिका-२०८०.pdf', size: 779868 },
+      ];
+
+      return djTalimFiles;
+    }
+
+    // Transform raw items into row objects with metadata
+    function processRows(rawItems) {
+      return rawItems.map(item => {
+        const longUrl = item.longurl;
+        const isHttp = item.isHttp !== undefined ? item.isHttp : /^https?:\/\//i.test(longUrl);
+        let fileName = longUrl;
+        let ext = '';
+        if (!isHttp) {
+          const parts = longUrl.split('/');
+          fileName = parts[parts.length-1] || longUrl;
+        } else {
+          try { fileName = new URL(longUrl).pathname.split('/').pop() || longUrl; } catch(e){ fileName = longUrl; }
+        }
+        ext = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : '';
+        
+        const categoryDisplay = getFileCategory(isHttp ? longUrl : fileName);
+        const simpleType = isHttp ? 'web' : getSimpleType(ext);
+        
+        let size = item.size;
+        if (size === undefined && !isHttp) {
+          // random plausible size if missing (for demo)
+          if (ext === 'txt') size = 2400 + Math.floor(Math.random()*8000);
+          else if (ext === 'pdf') size = 450000 + Math.floor(Math.random()*2000000);
+          else size = null;
+        }
+        
+        return {
+          shorturl: item.shorturl,
+          longurl: longUrl,
+          rawLongUrl: longUrl,
+          fileName: fileName,
+          typeDisplay: categoryDisplay,
+          simpleType: simpleType,
+          ext: ext,
+          size: size,
+          isHttp: isHttp,
+        };
+      });
+    }
+
+    // ---------- RENDER TABLE ----------
+    function renderTable() {
+      const info = window.data5UrlInfo || {};
+      const rowColors = info.rowColors || {};
+      
+      if (filteredRows.length === 0) {
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="4">📭 No files match the current filters.</td></tr>`;
+        rowCountDisplay.textContent = `0 items`;
+        return;
+      }
+
+      let html = '';
+      let rowIndex = 0;
+      for (let row of filteredRows) {
+        const short = row.shorturl;
+        const longRaw = row.longurl;
+        const href = row.isHttp ? longRaw : encodeURI(longRaw);
+        const displayLong = longRaw.length > 22 ? longRaw.slice(0, 19) + '...' : longRaw;
+        const titleLong = longRaw;
+        const sizeFormatted = (row.size !== null && row.size !== undefined) ? formatSize(row.size) : '—';
+        
+        // Highlight matching text
+        const useNormalize = normalizeNepali.checked;
+        const isCurrent = searchTerm && rowIndex === currentMatchIndex;
+        const highlightedShort = searchTerm ? highlightText(short, searchTerm, useNormalize, isCurrent) : short;
+        const highlightedLong = searchTerm ? highlightText(displayLong, searchTerm, useNormalize, isCurrent) : displayLong;
+        
+        // Highlight row if in rowColors
+        const highlight = rowColors.hasOwnProperty(short) ? 'data-highlight="true"' : '';
+        const bgColorStyle = rowColors[short] ? `background-color: ${rowColors[short]};` : '';
+        
+        html += `<tr ${highlight} style="${bgColorStyle}">`;
+        
+        // Type column
+        html += `<td><span class="type-badge">${row.typeDisplay}</span></td>`;
+        
+        // shorturl (clickable)
+        let previewContent = '';
+        if (row.simpleType === 'image') {
+          previewContent = `<img src="${row.longurl}" alt="Preview" style="max-width: 200px; max-height: 200px; border: 1px solid #ccc;">`;
+        } else {
+          const thumbSrc = `thumbnails/${row.longurl}_1.jpg`;
+          previewContent = `<img src="${thumbSrc}" alt="Thumbnail" style="max-width: 200px; max-height: 200px; border: 1px solid #ccc;" onerror="this.style.display='none'; this.nextSibling.style.display='block';"><div class="thumb-container" data-path="${row.longurl}" data-type="${row.typeDisplay}" data-size="${sizeFormatted}" data-fullpath="${row.longurl}" style="display:none; max-width: 400px; flex-wrap: wrap;"></div><div style="display:none; max-width: 300px;"><strong>${row.typeDisplay}</strong><br>Size: ${sizeFormatted}<br>Path: ${row.longurl}</div>`;
+        }
+        html += `<td class="shorturl-cell">`;
+        html += `<a href="${href}" target="_blank" title="${titleLong}">${highlightedShort}</a>`;
+        html += `<div class="preview">${previewContent}</div>`;
+        html += `</td>`;
+        
+        // longurl truncated with link
+        html += `<td class="longurl-cell">`;
+        html += `<a href="${href}" target="_blank" title="${titleLong}" style="max-width:220px; display:block;">${highlightedLong}</a>`;
+        html += `</td>`;
+        
+        // Size
+        html += `<td>${sizeFormatted}</td>`;
+        
+        html += `</tr>`;
+        rowIndex++;
+      }
+      
+      tbody.innerHTML = html;
+      rowCountDisplay.textContent = `${filteredRows.length} item${filteredRows.length !== 1 ? 's' : ''}`;
+      
+      if (searchTerm && filteredRows.length > 0) {
+        matchNav.style.display = 'block';
+        matchCount.textContent = `${currentMatchIndex + 1} of ${filteredRows.length}`;
+      } else {
+        matchNav.style.display = 'none';
+      }
+    }
+
+    // ---------- FILTER & SEARCH LOGIC ----------
+    function applyFilters() {
+      let result = [...allRows];
+      
+      // type filter
+      if (typeFilterValue !== 'all') {
+        result = result.filter(r => {
+          if (typeFilterValue === 'web') return r.isHttp === true;
+          if (typeFilterValue === 'document') return r.simpleType === 'document';
+          if (typeFilterValue === 'image') return r.simpleType === 'image';
+          if (typeFilterValue === 'other') return r.simpleType === 'other' && !r.isHttp;
+          return true;
+        });
+      }
+      
+      // search term (shorturl, longurl, filename) with optional Nepali normalization
+      if (filterRows.checked && searchTerm.trim() !== '') {
+        const useNormalize = normalizeNepali.checked;
+        const term = useNormalize ? NepaliNormalizer.normalize(searchTerm.trim().toLowerCase()) : searchTerm.trim().toLowerCase();
+        result = result.filter(r => {
+          const short = useNormalize ? NepaliNormalizer.normalize(r.shorturl.toLowerCase()) : r.shorturl.toLowerCase();
+          const long = useNormalize ? NepaliNormalizer.normalize(r.longurl.toLowerCase()) : r.longurl.toLowerCase();
+          const fname = useNormalize ? NepaliNormalizer.normalize(r.fileName.toLowerCase()) : r.fileName.toLowerCase();
+          return short.includes(term) || long.includes(term) || fname.includes(term);
+        });
+      }
+      
+      filteredRows = result;
+      renderTable();
+      populateTypeFilterOptions(); // update counts maybe, but keep static
+    }
+
+    // Populate filter dropdown with counts
+    function populateTypeFilterOptions() {
+      const counts = {
+        all: allRows.length,
+        web: allRows.filter(r => r.isHttp).length,
+        document: allRows.filter(r => r.simpleType === 'document').length,
+        image: allRows.filter(r => r.simpleType === 'image').length,
+        other: allRows.filter(r => r.simpleType === 'other' && !r.isHttp).length,
+      };
+      
+      const select = typeFilter;
+      const currentVal = select.value;
+      select.innerHTML = '';
+      const options = [
+        { val: 'all', label: `📄 All types (${counts.all})` },
+        { val: 'web', label: `🌐 Web URLs (${counts.web})` },
+        { val: 'document', label: `📑 Documents (${counts.document})` },
+        { val: 'image', label: `🖼️ Images (${counts.image})` },
+        { val: 'other', label: `📦 Other files (${counts.other})` },
+      ];
+      options.forEach(opt => {
+        const optionEl = document.createElement('option');
+        optionEl.value = opt.val;
+        optionEl.textContent = opt.label;
+        select.appendChild(optionEl);
+      });
+      select.value = currentVal;
+      if (![...select.options].some(o => o.value === currentVal)) select.value = 'all';
+    }
+
+    // Scroll to current match
+    function scrollToMatch() {
+      const rows = tbody.querySelectorAll('tr');
+      if (rows[currentMatchIndex]) {
+        rows[currentMatchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      matchCount.textContent = `${currentMatchIndex + 1} of ${filteredRows.length}`;
+    }
+    
+    // Re-highlight on match navigation
+    function updateMatchHighlights() {
+      const marks = tbody.querySelectorAll('mark');
+      marks.forEach(m => m.classList.remove('mark-current'));
+      const rows = tbody.querySelectorAll('tr');
+      if (rows[currentMatchIndex]) {
+        const currentMarks = rows[currentMatchIndex].querySelectorAll('mark');
+        if (currentMarks.length > 0) currentMarks[0].classList.add('mark-current');
+      }
+    }
+    function debounce(fn, delay) {
+      let timer;
+      return function(...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+      };
+    }
+    
+    const handleSearch = debounce(function() {
+      searchTerm = searchInput.value;
+      currentMatchIndex = 0;
+      applyFilters();
+    }, 200);
+
+    searchInput.addEventListener('input', handleSearch);
+    
+    typeFilter.addEventListener('change', (e) => {
+      typeFilterValue = e.target.value;
+      applyFilters();
+    });
+    
+    normalizeNepali.addEventListener('change', () => { currentMatchIndex = 0; applyFilters(); });
+    filterRows.addEventListener('change', () => { currentMatchIndex = 0; applyFilters(); });
+    
+    prevMatch.addEventListener('click', () => {
+      currentMatchIndex = Math.max(0, currentMatchIndex - 1);
+      updateMatchHighlights();
+      scrollToMatch();
+    });
+    
+    nextMatch.addEventListener('click', () => {
+      currentMatchIndex = Math.min(filteredRows.length - 1, currentMatchIndex + 1);
+      updateMatchHighlights();
+      scrollToMatch();
+    });
+    
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      typeFilter.value = 'all';
+      normalizeNepali.checked = true;
+      filterRows.checked = true;
+      searchTerm = '';
+      typeFilterValue = 'all';
+      currentMatchIndex = 0;
+      applyFilters();
+    });
+
+    // ---------- INITIALIZE ----------
+    function init() {
+      const raw = buildFileList();
+      allRows = processRows(raw);
+      filteredRows = [...allRows];
+      populateTypeFilterOptions();
+      renderTable();
+      
+      // Apply row colors via metadata (already handled in render, but we also mimic the style for 'shiva' etc)
+      // Also the script part "makeShortUrlLinks" is not needed because we generate links directly.
+      // But we keep the observer / metadata concept alive.
+    }
+
+    init();
+
+    // ---------- (Optional) The original script makeShortUrlLinks is not required because we render links.
+    // But we also provide a MutationObserver that ensures any future tables get enhancement (in case of dynamic insert).
+    // However we already fully control table. We expose the function to match the requested snippet.
+    window.makeShortUrlLinks = function() {
+      // already done. For compatibility, we just do nothing or reapply? but skip to avoid double.
+      console.log('makeShortUrlLinks called (already handled via render)');
+    };
+    
+    // Run on DOM ready and observe (but table is already enhanced)
+    document.addEventListener('DOMContentLoaded', function() {
+      // already rendered.
+    });
+    
+    // Observer for any table additions (if someone adds a table later)
+    const observer = new MutationObserver(function(mutations) {
+      // we can ignore; our table is managed.
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    // Also ensure data5Url variable is available (mock)
+    window.data5Url = `column1,column2,column3,shorturl,longurl
+A1,B1,C1,shiva,https://www.example.com/very/long/url/1
+A2,B2,C2,htmldoc,SimulationNegotiation.html
+A3,B3,C3,ppt10,ppt10.pdf
+A4,B4,C4,groupimg,groupphoto.jpg
+A5,B5,C5,ratopatinews,https://www.example.com/very/long/url/5`;
+
+    // ---------- BACK TO TOP BUTTON ----------
+    const backToTopBtn = document.getElementById('backToTop');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 300) {
+        backToTopBtn.style.display = 'block';
+      } else {
+        backToTopBtn.style.display = 'none';
+      }
+    });
+    backToTopBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // ---------- THUMBNAIL LOADING ----------
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.thumb-container').forEach(container => {
+        container.addEventListener('mouseenter', async () => {
+          if (container.children.length > 0) return; // Already loaded
+          const path = container.dataset.path;
+          const type = container.dataset.type;
+          const size = container.dataset.size;
+          const fullpath = container.dataset.fullpath;
+          try {
+            const response = await fetch(`/get_thumbs/${path}`);
+            const thumbs = await response.json();
+            if (thumbs.length > 0) {
+              thumbs.forEach(url => {
+                const img = document.createElement('img');
+                img.src = url;
+                img.style.width = '100px';
+                img.style.height = '100px';
+                img.style.margin = '2px';
+                img.style.border = '1px solid #ccc';
+                container.appendChild(img);
+              });
+            } else {
+              container.innerHTML = `<div style="max-width: 300px;"><strong>${type}</strong><br>Size: ${size}<br>Path: ${fullpath}</div>`;
+            }
+          } catch (e) {
+            container.innerHTML = `<div style="max-width: 300px;"><strong>${type}</strong><br>Size: ${size}<br>Path: ${fullpath}</div>`;
+          }
+        });
+      });
+    });
+  })();
+</script>
+</body>
+</html>
